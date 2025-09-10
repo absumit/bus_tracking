@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --light-grey: #f4f7f6;
+            --dark-grey: #333;
+            --white: #ffffff;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--light-grey);
+            color: var(--dark-grey);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%;
+            background: var(--white);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        p {
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        button {
+            cursor: pointer;
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .status {
+            margin: 20px 0;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .active {
+            background: #e4f8f0;
+            color: var(--success-color);
+        }
+
+        .inactive {
+            background: #fdeded;
+            color: var(--error-color);
+        }
+
+        .map {
+            width: 100%;
+            height: 200px;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin-top: 20px;
+            color: #666;
+            font-style: italic;
+        }
+
+        #dashboard h3 {
+            margin-top: 30px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container" id="loginPage">
+        <h1>Driver Login</h1>
+        <p id="busInfo"></p>
+        <input type="password" id="pin" placeholder="Enter PIN">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div class="container" id="dashboard" style="display:none;">
+        <h1>Driver Dashboard</h1>
+        <p><strong>Bus ID:</strong> <span id="busId"></span></p>
+        <p id="gpsStatus" class="status inactive">GPS Inactive</p>
+        <button onclick="startTrip()">Start Trip</button>
+        <button onclick="endTrip()">End Trip</button>
+
+        <h3>Last Location:</h3>
+        <p id="location">No data</p>
+
+        <div class="map" id="mapPlaceholder">Map Placeholder</div>
+    </div>
+
+    <script>
+        // Extract bus ID from URL
+        const params = new URLSearchParams(window.location.search);
+        const busId = params.get("bus") || "Unknown";
+        document.getElementById("busInfo").innerText = "Bus ID: " + busId;
+
+        let watchId = null;
+
+        function login() {
+            const pin = document.getElementById("pin").value;
+            if (pin === "") {
+                alert("Enter PIN to continue!");
+                return;
+            }
+            // Switch to dashboard
+            document.getElementById("loginPage").style.display = "none";
+            document.getElementById("dashboard").style.display = "block";
+            document.getElementById("busId").innerText = busId;
+        }
+
+        function startTrip() {
+            if (!navigator.geolocation) {
+                alert("GPS not supported");
+                return;
+            }
+            document.getElementById("gpsStatus").innerText = "GPS Active";
+            document.getElementById("gpsStatus").className = "status active";
+
+            watchId = navigator.geolocation.watchPosition((pos) => {
+                const lat = pos.coords.latitude.toFixed(5);
+                const lng = pos.coords.longitude.toFixed(5);
+                const time = new Date().toLocaleTimeString();
+                document.getElementById("location").innerText = `${lat}, ${lng} at ${time}`;
+                document.getElementById("mapPlaceholder").innerText = `Lat: ${lat}, Lng: ${lng}`;
+            });
+        }
+
+        function endTrip() {
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            document.getElementById("gpsStatus").innerText = "GPS Inactive";
+            document.getElementById("gpsStatus").className = "status inactive";
+            document.getElementById("location").innerText = "No data";
+            document.getElementById("mapPlaceholder").innerText = "Map Placeholder";
+        }
+    </script>
+
+</body>
+
+</html>
